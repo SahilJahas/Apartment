@@ -47,6 +47,90 @@
         </header>
         <!-- Header Section End -->
 
+
+<%
+    if ("POST".equalsIgnoreCase(request.getMethod())) {
+        // Retrieve form values
+        String fname = request.getParameter("first_name");
+        String lname = request.getParameter("last_name");
+        String mobile = request.getParameter("mobile");
+        String email = request.getParameter("email");
+        String checkin = request.getParameter("check_in");
+        String checkout = request.getParameter("check_out");
+        String adult = request.getParameter("adult_count");
+        String kid = request.getParameter("kid_count");
+        String roomType = request.getParameter("room_type");
+        String numRooms = request.getParameter("num_rooms");
+
+        // Validate input fields (basic checks)
+        if (fname == null || lname == null || mobile == null || email == null || 
+            checkin == null || checkout == null || adult == null || kid == null || 
+            roomType == null || numRooms == null) {
+            out.println("<div class='alert alert-danger text-center'>All fields must be filled out.</div>");
+            return; // Stop execution if required fields are missing
+        }
+
+        // Additional validation (email format, mobile format, etc.)
+        if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+            out.println("<div class='alert alert-danger text-center'>Invalid email format.</div>");
+            return;
+        }
+
+        if (!mobile.matches("^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$")) {
+            out.println("<div class='alert alert-danger text-center'>Invalid mobile number format.</div>");
+            return;
+        }
+
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        String url = "jdbc:mysql://localhost:3306/apartment?useUnicode=true&characterEncoding=UTF-8";
+        String dbUser = "root";
+        String dbPassword = "";
+
+        try {
+            // Ensure the driver is loaded
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            conn = DriverManager.getConnection(url, dbUser, dbPassword);
+
+            // Convert checkin and checkout dates into java.sql.Date
+            java.sql.Date checkinDate = java.sql.Date.valueOf(checkin);
+            java.sql.Date checkoutDate = java.sql.Date.valueOf(checkout);
+
+            // Prepare SQL query
+            String sql = "INSERT INTO bookings (first_name, last_name, mobile, email, check_in, check_out, adult_count, kid_count, room_type, num_rooms, created_at) "
+                       + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, fname);
+            stmt.setString(2, lname);
+            stmt.setString(3, mobile);
+            stmt.setString(4, email);
+            stmt.setDate(5, checkinDate);
+            stmt.setDate(6, checkoutDate);
+            stmt.setInt(7, Integer.parseInt(adult));
+            stmt.setInt(8, Integer.parseInt(kid));
+            stmt.setString(9, roomType);
+            stmt.setInt(10, Integer.parseInt(numRooms));
+
+            // Execute the query and check for success
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                out.println("<div class='alert alert-success text-center'>Booking successful!</div>");
+            } else {
+                out.println("<div class='alert alert-danger text-center'>Failed to make the booking. Please try again.</div>");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.println("<div class='alert alert-danger text-center'>Error: " + e.getMessage() + "</div>");
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException se) {
+                se.printStackTrace();
+            }
+        }
+    }
+%>
         <!-- Booking Form Section Start -->
         <div id="booking">
             <div class="container">
@@ -61,11 +145,11 @@
                                 <div class="form-row">
                                     <div class="control-group col-sm-6">
                                         <label>First Name</label>
-                                        <input type="text" class="form-control" id="fname" name="fname" placeholder="E.g. John" required="required" />
+                                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="E.g. John" required="required" />
                                     </div>
                                     <div class="control-group col-sm-6">
                                         <label>Last Name</label>
-                                        <input type="text" class="form-control" id="lname" name="lname" placeholder="E.g. Sina" required="required" />
+                                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="E.g. Sina" required="required" />
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -75,23 +159,23 @@
                                     </div>
                                     <div class="control-group col-sm-6">
                                         <label>Email</label>
-                                        <input type="email" class="form-control" id="email" name="email" placeholder="E.g. email@example.com" required="required" />
+                                        <input type="text" class="form-control" id="email" name="email" placeholder="E.g. email@example.com" required="required" />
                                     </div>
                                 </div>
                                 <div class="form-row">
-                                    <div class="control-group col-sm-6">
-                                        <label>Check-In</label>
-                                        <input type="text" class="form-control datetimepicker-input" id="checkin" name="checkin" data-toggle="datetimepicker" data-target="#checkin" placeholder="E.g. MM/DD/YYYY" required="required" />
-                                    </div>
-                                    <div class="control-group col-sm-6">
-                                        <label>Check-Out</label>
-                                        <input type="text" class="form-control datetimepicker-input" id="checkout" name="checkout" data-toggle="datetimepicker" data-target="#checkout" placeholder="E.g. MM/DD/YYYY" required="required" />
-                                    </div>
-                                </div>
+    <div class="control-group col-sm-6">
+        <label>Check-In</label>
+        <input type="text" class="form-control datetimepicker-input" id="check_in" name="check_in" data-toggle="datetimepicker" data-target="#checkin" placeholder="E.g. 2025/01/29" required="required" />
+    </div>
+    <div class="control-group col-sm-6">
+        <label>Check-Out</label>
+        <input type="text" class="form-control datetimepicker-input" id="check_out" name="check_out" data-toggle="datetimepicker" data-target="#checkout" placeholder="E.g. 2025/01/29" required="required" />
+    </div>
+</div>
                                 <div class="form-row">
                                     <div class="control-group col-sm-6">
                                         <label>Adult</label>
-                                        <select class="custom-select" id="adult" name="adult" required="required">
+                                        <select class="custom-select" id="adult_count" name="adult_count" required="required">
                                             <option value="0">0</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
@@ -107,7 +191,7 @@
                                     </div>
                                     <div class="control-group col-sm-6">
                                         <label>Kid</label>
-                                        <select class="custom-select" id="kid" name="kid" required="required">
+                                        <select class="custom-select" id="kid_count" name="kid_count" required="required">
                                             <option value="0">0</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
@@ -124,7 +208,7 @@
                                 </div>
                                 <div class="control-group">
                                     <label>Room Type</label>
-                                    <select class="custom-select" id="roomType" name="roomType" required="required">
+                                    <select class="custom-select" id="room_type" name="room_type" required="required">
                                         <option value="">Select Room Type</option>
                                         <option value="Standard Single">Standard Single</option>
                                         <option value="Standard Double">Standard Double</option>
@@ -135,7 +219,7 @@
                                 </div>
                                 <div class="control-group">
                                     <label>Number of Rooms</label>
-                                    <select class="custom-select" id="numRooms" name="numRooms" required="required">
+                                    <select class="custom-select" id="num_rooms" name="num_rooms" required="required">
                                         <option value="1">1</option>
                                         <option value="2">2</option>
                                         <option value="3">3</option>
@@ -153,70 +237,6 @@
             </div>
         </div>
         <!-- Booking Form Section End -->
-<%-- Database connection and insertion logic --%>
-<%
-    if ("POST".equalsIgnoreCase(request.getMethod())) {
-        String fname = request.getParameter("first_name");
-        String lname = request.getParameter("last_name");
-        String mobile = request.getParameter("mobile");
-        String email = request.getParameter("email");
-        String checkin = request.getParameter("check_in");
-        String checkout = request.getParameter("checkout");
-        String adult = request.getParameter("adult_count");
-        String kid = request.getParameter("kid_count");
-        String roomType = request.getParameter("room_type");
-        String numRooms = request.getParameter("num_rooms");
-
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        String url = "jdbc:mysql://localhost:3306/apartment?useUnicode=true&characterEncoding=UTF-8";
-        String dbUser = "root";
-        String dbPassword = "";
-
-        try {
-            // Ensure the driver is loaded
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection(url, dbUser, dbPassword);
-
-            // Convert checkin and checkout dates into java.sql.Date
-            java.sql.Date checkinDate = java.sql.Date.valueOf(checkin);
-            java.sql.Date checkoutDate = java.sql.Date.valueOf(checkout);
-
-            String sql = "INSERT INTO bookings (first_name, last_name, mobile, email, check_in, checkout, adult_count, kid_count, room_type, num_rooms, created_at) "
-                       + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
-            stmt = conn.prepareStatement(sql);
-            stmt.setString(1, fname);
-            stmt.setString(2, lname);
-            stmt.setString(3, mobile);
-            stmt.setString(4, email);
-            stmt.setDate(5, checkinDate);
-            stmt.setDate(6, checkoutDate);
-            stmt.setInt(7, Integer.parseInt(adult));
-            stmt.setInt(8, Integer.parseInt(kid));
-            stmt.setString(9, roomType);
-            stmt.setInt(10, Integer.parseInt(numRooms));
-
-            int rowsAffected = stmt.executeUpdate();
-            if (rowsAffected > 0) {
-                out.println("<div class='alert alert-success text-center'>Booking successful!</div>");
-            } else {
-                out.println("<div class='alert alert-danger text-center'>Failed to make the booking.</div>");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            out.println("<div class='alert alert-danger text-center'>Error: " + e.getMessage() + "</div>");
-        } finally {
-            try {
-                if (stmt != null) stmt.close();
-                if (conn != null) conn.close();
-            } catch (SQLException se) {
-                se.printStackTrace();
-            }
-        }
-    }
-%>
-
-
 
         <!-- Footer Section Start -->
         <div id="footer">
@@ -261,21 +281,21 @@
         <script src="vendor/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
         
         <!-- Main Javascript File -->
-        <script>
-            $(document).ready(function() {
-                $('#checkin').datetimepicker({
-                    format: 'L'
-                });
-                $('#checkout').datetimepicker({
-                    format: 'L',
-                    useCurrent: false // Important for "Check-Out" field to be after "Check-In"
-                });
+      <script>
+    $(document).ready(function() {
+        $('#checkin').datetimepicker({
+            format: 'YYYY/MM/DD' // Set to year/month/day format
+        });
+        $('#checkout').datetimepicker({
+            format: 'YYYY/MM/DD', // Set to year/month/day format
+            useCurrent: false // Important for "Check-Out" field to be after "Check-In"
+        });
 
-                $("#checkin").on("change.datetimepicker", function(e) {
-                    $('#checkout').datetimepicker('minDate', e.date);
-                });
-            });
-        </script>
+        $("#checkin").on("change.datetimepicker", function(e) {
+            $('#checkout').datetimepicker('minDate', e.date); // Ensure checkout is after check-in
+        });
+    });
+</script>
         <script src="js/main.js"></script>
     </body>
 </html>
