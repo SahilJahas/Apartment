@@ -145,7 +145,7 @@
                                         
                                         out.println("<form action='deleteBooking.jsp' method='get'>");
                                         out.println("<input type='hidden' name='id' value='" + bookingId + "' />");
-                                        out.println("<button type='submit' class='btn btn-danger'>Delete</button>");
+                                        out.println("<button type='submit' class='btn btn-danger'>Cancel Booking</button>");
                                         out.println("</form>");
                                     } else {
                                         out.println("<div class='alert alert-danger text-center'>Failed to make the booking. Please try again.</div>");
