@@ -82,6 +82,7 @@
 
                                 Connection conn = null;
                                 PreparedStatement stmt = null;
+                                ResultSet rs = null;
                                 String url = "jdbc:mysql://localhost:3306/apartment?useUnicode=true&characterEncoding=UTF-8";
                                 String dbUser = "root";
                                 String dbPassword = "";
@@ -98,7 +99,7 @@
                                     // Prepare SQL query for insertion
                                     String sql = "INSERT INTO bookings (first_name, last_name, mobile, email, check_in, check_out, adult_count, kid_count, room_type, num_rooms, created_at) "
                                                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
-                                    stmt = conn.prepareStatement(sql);
+                                    stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);  // Use RETURN_GENERATED_KEYS to get the booking ID
                                     stmt.setString(1, fname);
                                     stmt.setString(2, lname);
                                     stmt.setString(3, mobile);
@@ -113,10 +114,17 @@
                                     // Execute the query and check for success
                                     int rowsAffected = stmt.executeUpdate();
                                     if (rowsAffected > 0) {
+                                        rs = stmt.getGeneratedKeys();
+                                        int bookingId = -1;
+                                        if (rs.next()) {
+                                            bookingId = rs.getInt(1);  // Get the generated booking ID
+                                        }
+
                                         out.println("<div class='alert alert-success text-center'>Booking successful!</div>");
                                         
                                         // Display the booking details after successful booking
                                         out.println("<table class='table table-striped'>");
+                                        out.println("<tr><th>Booking ID</th><td>" + bookingId + "</td></tr>");
                                         out.println("<tr><th>First Name</th><td>" + fname + "</td></tr>");
                                         out.println("<tr><th>Last Name</th><td>" + lname + "</td></tr>");
                                         out.println("<tr><th>Mobile</th><td>" + mobile + "</td></tr>");
@@ -130,7 +138,6 @@
                                         out.println("</table>");
                                         
                                         // Add Edit and Delete buttons
-                                        int bookingId = 1; // You should replace this with the actual booking ID.
                                         out.println("<form action='editBooking.jsp' method='POST'>");
                                         out.println("<input type='hidden' name='id' value='" + bookingId + "' />");
                                         out.println("<button type='submit' class='btn btn-warning'>Edit</button>");
@@ -140,8 +147,6 @@
                                         out.println("<input type='hidden' name='id' value='" + bookingId + "' />");
                                         out.println("<button type='submit' class='btn btn-danger'>Delete</button>");
                                         out.println("</form>");
-                                        
-                              
                                     } else {
                                         out.println("<div class='alert alert-danger text-center'>Failed to make the booking. Please try again.</div>");
                                     }
